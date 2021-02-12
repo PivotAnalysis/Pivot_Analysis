@@ -1,1 +1,6 @@
 nsepy
+datetime
+smtplib
+email.mime.text
+email.mime.multipart
+pretty_html_table
