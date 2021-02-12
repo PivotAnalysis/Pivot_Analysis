@@ -62,7 +62,7 @@ df['Expected Outcome'] = expected_outcome(arg)
 df1 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3', 'H4', 'H5', 'L3', 'L4', 'L5','Central Pivot','Top Central','Bottom Central'], axis = 1)
 df2 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3','L3','Central Pivot','Top Central','Bottom Central','2 Day Relationship','Expected Outcome'], axis = 1)
 df3 = df2.iloc[0]
-print(type(df3))
+
 
 from smtplib import SMTP
 from email.mime.text import MIMEText
