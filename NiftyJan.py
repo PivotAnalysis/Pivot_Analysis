@@ -95,6 +95,15 @@ def trading_plan():
     send_mail(output)
     return "Mail sent successfully."
 
+from rq import Queue
+from worker import conn
+
+q = Queue(connection=conn)
+
+from utils import count_words_at_url
+
+result = q.enqueue(count_words_at_url, 'http://heroku.com')
+
 if __name__ == "__main__":
   trading_plan()
 
