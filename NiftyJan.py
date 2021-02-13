@@ -95,6 +95,7 @@ def trading_plan():
     send_mail(output)
     return "Mail sent successfully."
 
-trading_plan()
+if __name__ == "__main__":
+  trading_plan()
 
 #export_csv = df3.to_csv(r'C:\Users\AnujSharma\Google Drive\Trading_Plan.csv', index = True, header = True)
