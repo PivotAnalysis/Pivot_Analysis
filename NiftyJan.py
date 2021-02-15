@@ -54,8 +54,8 @@ df['Central Pivot'] = P
 df['TC'] = TC
 df['BC'] = BC
 
-df['Top Central'] = df.apply(lambda df:df['TC'] if df['TC'] > df['BC'] else df['BC'],axis = 1)
-df['Bottom Central'] = df.apply(lambda df:df['BC'] if df['TC'] > df['BC'] else df['TC'],axis = 1)
+"""df['Top Central'] = df.apply(lambda df:df['TC'] if df['TC'] > df['BC'] else df['BC'],axis = 1)
+df['Bottom Central'] = df.apply(lambda df:df['BC'] if df['TC'] > df['BC'] else df['TC'],axis = 1)"""
 
 
 if df['H3'].iloc[0] == df['H3'].iloc[1] and df['L3'].iloc[0] == df['L3'].iloc[1]:
