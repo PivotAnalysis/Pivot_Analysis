@@ -69,6 +69,12 @@ df1 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3', 'H4', 
 df2 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3','L3','Central Pivot','Top Central','Bottom Central','2 Day Relationship','Expected Outcome'], axis = 1)
 df3 = df2.iloc[0]
 
+output = Stringio.BytesIO() # For Python3 use StringIO
+df3.to_csv(output, sep='\t', header=True, index=False)
+output.seek(0) # Required for rewinding the String object
+copy_query = "COPY Pivot FROM STDOUT csv DELIMITER '\t' NULL ''  ESCAPE '\\' HEADER "  # Replace your table name in place of mem_info
+cur.copy_expert(copy_query, output)
+conn.commit()
 
 from smtplib import SMTP
 from email.mime.text import MIMEText
