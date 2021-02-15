@@ -1,6 +1,15 @@
 from datetime import date
 import os
 import psycopg2
+import pandas as pd
+from sqlalchemy import create_engine
+import sqlalchemy as db
+from nsepy import get_history
+from smtplib import SMTP
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from pretty_html_table import build_table
+
 
 param_dic = {
     "host"      : "ec2-54-162-119-125.compute-1.amazonaws.com",
@@ -21,8 +30,6 @@ def connect(params_dic):
         sys.exit(1)
     return conn
 
-
-from nsepy import get_history
 
 data = get_history (symbol = "NIFTY", start = date (2020, 12, 1), end = date.today (), index = True, futures = True,
                     expiry_date = date (2021, 2, 25))
@@ -85,7 +92,6 @@ df1 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3', 'H4', 
 df2 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3','L3','Central Pivot','Top Central','Bottom Central','2 Day Relationship','Expected Outcome'], axis = 1)
 df3 = df2[0:1]
 
-from sqlalchemy import create_engine
 
 connect = "postgresql+psycopg2://%s:%s@%s:5432/%s" % (
     param_dic['user'],
@@ -94,12 +100,11 @@ connect = "postgresql+psycopg2://%s:%s@%s:5432/%s" % (
     param_dic['database']
 )
 
-
 def to_alchemy(df):
     """
     Using a dummy table to test this call library
     """
-    engine = create_engine (connect)
+    engine = create_engine(connect)
     df.to_sql (
         'test_table',
         con = engine,
@@ -108,11 +113,17 @@ def to_alchemy(df):
     )
     print ("to_sql() done (sqlalchemy)")
 
-
-
-from smtplib import SMTP
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+def read_query():
+    engine = create_engine (connect)
+    connection = engine.connect()
+    metadata = db.MetaData ()
+    records = db.Table ('test_table', metadata, autoload = True, autoload_with = engine)
+    query = db.select([records])
+    ResultProxy = connection.execute(query)
+    ResultSet = ResultProxy.fetchall()
+    return_dataframe = pd.DataFrame(ResultSet)
+    print ("reading done from sql() via (sqlalchemy)")
+    return return_dataframe
 
 def send_mail(body):
 
@@ -132,16 +143,17 @@ def send_mail(body):
     server.sendmail(message['From'], message['To'], msg_body)
     server.quit()
 
-from pretty_html_table import build_table
-print(df2.head())
 
-def trading_plan():
-    plan = df2
+
+
+def trading_plan(rec):
+    plan = rec
     output = build_table(plan, 'blue_light')
     send_mail(output)
     return "Mail sent successfully."
 
 
 if __name__ == "__main__":
-    to_alchemy (df2)
-    trading_plan()
+    to_alchemy(df2)
+    record = read_query()
+    trading_plan(record)
