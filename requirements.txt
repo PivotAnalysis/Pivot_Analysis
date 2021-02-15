@@ -2,3 +2,4 @@ nsepy
 datetime
 pretty_html_table
 psycopg2-binary
+sqlalchemy
