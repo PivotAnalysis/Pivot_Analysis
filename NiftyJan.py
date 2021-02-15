@@ -2,9 +2,46 @@ from datetime import date
 import os
 import psycopg2
 
-DATABASE_URL = os.environ['postgres://znttynzprdtcvq:5c113f83faecec6c72daed5b666a3e30f025914e1042cd7964582097fcfac528@ec2-54-162-119-125.compute-1.amazonaws.com:5432/d2doea77iug85']
+param_dic = {
+    "host"      : "ec2-54-162-119-125.compute-1.amazonaws.com",
+    "database"  : "d2doea77iug85",
+    "user"      : "znttynzprdtcvq",
+    "password"  : "5c113f83faecec6c72daed5b666a3e30f025914e1042cd7964582097fcfac528"
+}
 
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+def connect(params_dic):
+    """ Connect to the PostgreSQL database server """
+    conn = None
+    try:
+        # connect to the PostgreSQL server
+        print('Connecting to the PostgreSQL database...')
+        conn = psycopg2.connect(**params_dic)
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        sys.exit(1)
+    return conn
+
+def execute_values(conn, df, table):
+    """
+    Using psycopg2.extras.execute_values() to insert the dataframe
+    """
+    # Create a list of tupples from the dataframe values
+    tuples = [tuple(x) for x in df.to_numpy()]
+    # Comma-separated dataframe columns
+    cols = ','.join(list(df.columns))
+    # SQL quert to execute
+    query  = "INSERT INTO %s(%s) VALUES %%s" % (table, cols)
+    cursor = conn.cursor()
+    try:
+        extras.execute_values(cursor, query, tuples)
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error: %s" % error)
+        conn.rollback()
+        cursor.close()
+        return 1
+    print("execute_values() done")
+    cursor.close()
 
 from nsepy import get_history
 
@@ -48,7 +85,7 @@ elif df['H3'].iloc[0] > df['H3'].iloc[1] and df['L3'].iloc[0] > df['L3'].iloc[1]
 elif df['H3'].iloc[0] < df['L3'].iloc[1]:
     df['2 Day Relationship'] = "Lower Value"
 elif df['H3'].iloc[0] < df['H3'].iloc[1] and df['L3'].iloc[0] < df['L3'].iloc[1]:
-    df['2 Day Relationship'] = " Overlapping Lower Value"
+    df['2 Day Relationship'] = "Overlapping Lower Value"
 else:
     df['2 Day Relationship'] = "Not Applicable"
 
@@ -67,14 +104,32 @@ arg = df['2 Day Relationship'].iloc[0]
 df['Expected Outcome'] = expected_outcome(arg)
 df1 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3', 'H4', 'H5', 'L3', 'L4', 'L5','Central Pivot','Top Central','Bottom Central'], axis = 1)
 df2 = df.filter (['Date', 'Symbol', 'Expiry','High','Low', 'Close', 'H3','L3','Central Pivot','Top Central','Bottom Central','2 Day Relationship','Expected Outcome'], axis = 1)
-df3 = df2.iloc[0]
+df3 = df2[0:1]
 
-output = Stringio.BytesIO() # For Python3 use StringIO
-df3.to_csv(output, sep='\t', header=True, index=False)
-output.seek(0) # Required for rewinding the String object
-copy_query = "COPY Pivot FROM STDOUT csv DELIMITER '\t' NULL ''  ESCAPE '\\' HEADER "  # Replace your table name in place of mem_info
-cur.copy_expert(copy_query, output)
-conn.commit()
+from sqlalchemy import create_engine
+
+connect = "postgresql+psycopg2://%s:%s@%s:5432/%s" % (
+    param_dic['user'],
+    param_dic['password'],
+    param_dic['host'],
+    param_dic['database']
+)
+
+
+def to_alchemy(df):
+    """
+    Using a dummy table to test this call library
+    """
+    engine = create_engine (connect)
+    df.to_sql (
+        'test_table',
+        con = engine,
+        index = False,
+        if_exists = 'replace'
+    )
+    print ("to_sql() done (sqlalchemy)")
+
+
 
 from smtplib import SMTP
 from email.mime.text import MIMEText
@@ -99,7 +154,7 @@ def send_mail(body):
     server.quit()
 
 from pretty_html_table import build_table
-
+print(df2.head())
 
 def trading_plan():
     plan = df2
@@ -107,16 +162,7 @@ def trading_plan():
     send_mail(output)
     return "Mail sent successfully."
 
-from rq import Queue
-from worker import conn
-
-q = Queue(connection=conn)
-
-from utils import count_words_at_url
-
-result = q.enqueue(count_words_at_url, 'http://heroku.com')
 
 if __name__ == "__main__":
-  trading_plan()
-
-#export_csv = df3.to_csv(r'C:\Users\AnujSharma\Google Drive\Trading_Plan.csv', index = True, header = True)
+    to_alchemy (df2)
+    trading_plan()
