@@ -1,4 +1,10 @@
 from datetime import date
+import os
+import psycopg2
+
+DATABASE_URL = os.environ['postgres://znttynzprdtcvq:5c113f83faecec6c72daed5b666a3e30f025914e1042cd7964582097fcfac528@ec2-54-162-119-125.compute-1.amazonaws.com:5432/d2doea77iug85']
+
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 from nsepy import get_history
 
