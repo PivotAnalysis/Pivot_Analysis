@@ -9,8 +9,8 @@ from email.mime.multipart import MIMEMultipart
 from pretty_html_table import build_table
 
 def Nifty_data():
-    data = get_history (symbol = "NIFTY", start = date (2020, 12, 1), end = date.today (), index = True, futures = True,
-                    expiry_date = date (2021, 2, 25))
+    data = get_history (symbol = "NIFTY", start = date (2021, 2, 1), end = date.today (), index = True, futures = True,
+                    expiry_date = date (2021, 3, 25))
     data = data.sort_index(ascending = False)
     df = data
     H3 = round (df.Close + (df.High - df.Low) * 1.1 / 4, 2)
